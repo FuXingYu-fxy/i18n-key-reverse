@@ -1,26 +1,88 @@
-// The module 'vscode' contains the VS Code extensibility API
-// Import the module and reference it with the alias vscode in your code below
 import * as vscode from 'vscode';
+import { translate, resourceLoadSuccess, loadTranslateResource } from './translate';
 
-// This method is called when your extension is activated
-// Your extension is activated the very first time the command is executed
-export function activate(context: vscode.ExtensionContext) {
-
-	// Use the console to output diagnostic information (console.log) and errors (console.error)
-	// This line of code will only be executed once when your extension is activated
-	console.log('Congratulations, your extension "i18n-reverse" is now active!');
-
-	// The command has been defined in the package.json file
-	// Now provide the implementation of the command with registerCommand
-	// The commandId parameter must match the command field in package.json
-	let disposable = vscode.commands.registerCommand('i18n-reverse.helloWorld', () => {
-		// The code you place here will be executed every time your command is executed
-		// Display a message box to the user
-		vscode.window.showInformationMessage('Hello World from i18n-reverse!');
-	});
-
-	context.subscriptions.push(disposable);
+function isDef<T>(val: T): val is NonNullable<T> {
+  return val !== undefined && val !== null;
 }
 
-// This method is called when your extension is deactivated
+async function updateDecorations(editor: vscode.TextEditor | undefined) {
+  if (!editor) { return; }
+  
+  const document = editor?.document;
+  if (!document) { return; }
+  // vscode 读取安装目录的文件
+  const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
+  if (!workspaceFolder) { return; }
+  const config = vscode.workspace.getConfiguration();
+  const resourcePath: string | undefined = config.get('i18n-reverse.resourcePath');
+  if (!resourcePath) { return; }
+
+  const resolvedPath = vscode.Uri.joinPath(workspaceFolder.uri, resourcePath);
+
+  if (!resourceLoadSuccess) {
+    try {
+      const resource = (await vscode.workspace.fs.readFile(resolvedPath)).toString();
+      const firstLeftBraceIndex = resource.indexOf('{');
+      const res = resource.slice(firstLeftBraceIndex);
+      const resourceObj = eval(`(${res})`);
+      loadTranslateResource(resourceObj);
+    } catch(err: any) {
+      vscode.window.showErrorMessage(err.message);
+      return;
+    }
+  }
+  const decorationType = vscode.window.createTextEditorDecorationType({
+    textDecoration: 'none; display: none;',
+  });
+  const decorationOptions: vscode.DecorationOptions[] = [];
+
+  for (let i = 0; i < document.lineCount; i++) {
+    const res = getRangeText(document.lineAt(i));
+    if (!res) {continue;}
+    const { range, translateResult, matchedStr } = res;
+    decorationOptions.push({
+      range,
+      hoverMessage: matchedStr,
+      renderOptions: {
+        after: {
+          contentText: translateResult,
+          color: 'yellow',
+          border: '1px solid gray',
+        }
+      }
+    });
+  }
+  // 设置装饰后, 刷新编辑器
+  editor.setDecorations(decorationType, decorationOptions);
+}
+
+export function activate() {
+  console.log('插件激活');
+  vscode.window.onDidChangeActiveTextEditor(updateDecorations);
+
+  const editor = vscode.window.activeTextEditor;
+  updateDecorations(editor);
+}
+
+function getRangeText(line: vscode.TextLine): {range: vscode.Range; translateResult: string; matchedStr: string} | null {
+  const regex = /\$t\('([^']+)'\)/;
+  const text = line.text;
+  const matcher = text.match(regex);
+  const index = matcher?.index;
+  if (isDef(index) && matcher )  {
+    const [result] = matcher;
+    const translateResult = translate(matcher[1]);
+    const start = index;
+    const end = start + result.length;
+    const range = new vscode.Range(line.lineNumber, start, line.lineNumber, end);
+
+    return {
+      range,
+      translateResult,
+      matchedStr: matcher[1]
+    };
+  }
+  return null;
+}
+
 export function deactivate() {}

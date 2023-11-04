@@ -1,38 +1,60 @@
 {
   "name": "i18n-reverse",
   "displayName": "i18n-reverse",
-  "description": "It can reverse the i18n key to your preferred language display！",
+  "description": "Reverse the i18n key to your preferred language display!",
   "version": "0.0.1",
+  "author": {
+    "name": "Xingyu Fu"
+  },
+  "publisher": "xingyu-fu",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/FuXingYu-fxy/i18n-key-reverse.git"
+  },
   "engines": {
     "vscode": "^1.83.0"
   },
   "categories": [
     "Other"
   ],
-  "activationEvents": [],
+  "activationEvents": [
+    "onStartupFinished"
+  ],
   "main": "./out/extension.js",
+  "icon": "./logo.png",
   "contributes": {
-    "commands": [
+    "configuration": [
       {
-        "command": "i18n-reverse.helloWorld",
-        "title": "Hello World"
+        "title": "i18n-reverse",
+        "properties": {
+          "i18n-reverse.resourcePath": {
+            "type": "string",
+            "default": "src/lang/zh/index.js",
+            "description": "where the i18n translate resource"
+          }
+        }
       }
     ]
   },
   "scripts": {
     "vscode:prepublish": "npm run compile",
     "compile": "tsc -p ./",
+    "build": "vsce package",
     "watch": "tsc -watch -p ./",
     "pretest": "npm run compile && npm run lint",
     "lint": "eslint src --ext ts"
   },
   "devDependencies": {
-    "@types/vscode": "^1.83.0",
     "@types/node": "16.x",
+    "@types/vscode": "^1.83.0",
     "@typescript-eslint/eslint-plugin": "^6.4.1",
     "@typescript-eslint/parser": "^6.4.1",
+    "@vscode/vsce": "^2.22.0",
     "eslint": "^8.47.0",
     "glob": "^10.3.3",
     "typescript": "^5.1.6"
+  },
+  "dependencies": {
+    "i18next": "^23.6.0"
   }
 }
