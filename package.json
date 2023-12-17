@@ -2,7 +2,7 @@
   "name": "i18n-reverse",
   "displayName": "i18n-reverse",
   "description": "Reverse the i18n key to your preferred language display!",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "author": {
     "name": "Xingyu Fu"
   },

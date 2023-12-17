@@ -32,7 +32,7 @@ async function updateDecorations(editor: vscode.TextEditor | undefined) {
     }
   }
   const decorationType = vscode.window.createTextEditorDecorationType({
-    textDecoration: 'none; display: none;',
+    textDecoration: 'none; display: none;', // display: none 用于隐藏掉原本的文字
   });
   const decorationOptions: vscode.DecorationOptions[] = [];
 
@@ -65,7 +65,7 @@ export function activate() {
 }
 
 function getRangeText(line: vscode.TextLine): {range: vscode.Range; translateResult: string; matchedStr: string} | null {
-  const regex = /\$t\('([^']+)'\)/;
+  const regex = /\$t\(['"]([^'"]+)['"]\)/;
   const text = line.text;
   const matcher = text.match(regex);
   const index = matcher?.index;
